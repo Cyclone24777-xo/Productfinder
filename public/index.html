@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ProductScout – multi-AI product finder</title>
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f3f1fb;--ink:#14102f;--mute:#5e5a82;--card:rgba(255,255,255,.82);--line:rgba(20,16,47,.13);--field:rgba(20,16,47,.05);
+  --cyan:#00a6f2;--yellow:#f2a900;--pink:#ff1fa9;--green:#10b84a;--orange:#ff6a3d;--onc:#0e0c24;--navy:#12102b;
+  --display:"Fredoka","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0c24;--ink:#f4f2ff;--mute:#aaa6cf;--card:rgba(26,22,60,.74);--line:rgba(255,255,255,.13);--field:rgba(255,255,255,.07);--cyan:#00b2ff;--yellow:#ffd800;--green:#2dff1a}}
+:root[data-theme="dark"]{--bg:#0e0c24;--ink:#f4f2ff;--mute:#aaa6cf;--card:rgba(26,22,60,.74);--line:rgba(255,255,255,.13);--field:rgba(255,255,255,.07);--cyan:#00b2ff;--yellow:#ffd800;--green:#2dff1a}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;overflow-x:hidden}
+
+/* ---------- animated mesh background ---------- */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform}
+.b1{width:55vmax;height:55vmax;left:-15vmax;bottom:-20vmax;background:#ff2e5b;animation:d1 18s ease-in-out infinite alternate}
+.b2{width:50vmax;height:50vmax;right:-15vmax;top:-18vmax;background:#6f63ff;animation:d2 22s ease-in-out infinite alternate}
+.b3{width:40vmax;height:40vmax;left:25vw;top:-12vmax;background:#2ea8ff;animation:d3 16s ease-in-out infinite alternate}
+.b4{width:30vmax;height:30vmax;right:5vw;bottom:-10vmax;background:#ff1fa9;opacity:.35;animation:d1 25s ease-in-out infinite alternate-reverse}
+@keyframes d1{to{transform:translate(18vw,-14vh) scale(1.2)}}
+@keyframes d2{to{transform:translate(-20vw,22vh) scale(.85)}}
+@keyframes d3{to{transform:translate(14vw,18vh) scale(1.25)}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 50% 120%,transparent 40%,var(--bg) 100%);opacity:.55}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 70px}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:10px;padding:10px 0;margin:0 -4px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.logo{font-family:var(--display);font-weight:700;font-size:20px;white-space:nowrap}
+.logo b{background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none;padding:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font:inherit;font-family:var(--display);font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;transition:transform .25s cubic-bezier(.3,1.8,.5,1),background .2s}
+.tab:hover{transform:scale(1.07,.94)}
+.tab.on{background:var(--cyan);color:var(--onc);border-color:transparent}
+.tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--pink);color:#fff;font-size:11px;text-align:center}
+
+/* ---------- hero ---------- */
+.hero{position:relative;text-align:center;padding:44px 0 26px;overflow:hidden;border-radius:28px}
+.pattern{position:absolute;inset:0;pointer-events:none;z-index:0}
+.pattern span{position:absolute;font-family:var(--display);font-weight:700;opacity:.16;animation:spinf var(--t) linear infinite}
+@keyframes spinf{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hero>*:not(.pattern){position:relative;z-index:1}
+.kin{margin:0;font-family:var(--display);font-weight:700;line-height:.95;letter-spacing:-.01em}
+.kin .word{display:block;font-size:clamp(54px,15vw,132px);min-height:1em;color:var(--cyan);text-transform:uppercase;white-space:nowrap}
+.kin .stat{display:block;font-size:clamp(24px,6.4vw,54px);text-transform:uppercase;margin-top:6px}
+.l{display:inline-block;transform-origin:50% 60%}
+.word .l{animation:stIn .75s cubic-bezier(.2,1.5,.4,1) backwards,breathe 2.6s ease-in-out .8s infinite alternate;animation-delay:calc(var(--i)*55ms),calc(var(--i)*55ms + .8s)}
+.word.out .l{animation:stOut .45s cubic-bezier(.6,0,.9,.4) forwards;animation-delay:calc(var(--i)*30ms)}
+@keyframes stIn{0%{transform:scale(1.9,.05);opacity:0}55%{transform:scale(.85,1.35);opacity:1}100%{transform:none}}
+@keyframes stOut{to{transform:scale(.4,2.6);opacity:0}}
+@keyframes breathe{0%{transform:scale(1,1)}100%{transform:scale(1.07,.93)}}
+.stat .l{animation:wave 3.2s ease-in-out infinite;animation-delay:calc(var(--i)*70ms)}
+@keyframes wave{0%,100%{transform:scale(1,1)}50%{transform:scale(.92,1.14)}}
+.sub{max-width:560px;margin:16px auto 0;color:var(--mute);font-size:17px}
+.stats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:22px}
+.sb{font-family:var(--display);padding:10px 18px;border-radius:16px;font-weight:700;color:var(--onc);font-size:15px;animation:floaty 4s ease-in-out infinite alternate}
+.sb b{font-size:24px;display:block;line-height:1}
+.sb:nth-child(1){background:var(--yellow)}.sb:nth-child(2){background:var(--cyan);animation-delay:-1s}.sb:nth-child(3){background:#ff4fc0;animation-delay:-2s}.sb:nth-child(4){background:#3dff6e;animation-delay:-3s}
+@keyframes floaty{to{transform:translateY(-7px) rotate(-1.5deg)}}
+
+/* ---------- marquee ---------- */
+.marq{overflow:hidden;margin:6px -16px 0;padding:10px 0;transform:rotate(-1.2deg);background:var(--yellow);color:var(--onc)}
+.marq .tr{display:flex;width:max-content;animation:mq 32s linear infinite;font-family:var(--display);font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.marq span{padding:0 18px;white-space:nowrap}.marq span::after{content:"✦";margin-left:36px;color:var(--pink)}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- cards & forms ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin-top:18px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 34px rgba(10,5,60,.12)}
+.pop{animation:popIn .6s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d,0ms)}
+@keyframes popIn{0%{opacity:0;transform:translateY(34px) scale(.94,1.06)}100%{opacity:1;transform:none}}
+h2{margin:0 0 10px;font-family:var(--display);font-size:22px}
+h3{margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 5px}
+textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:14px;padding:11px 13px;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea:focus,input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 4px color-mix(in srgb,var(--cyan) 25%,transparent)}
+select option{color:#14102f}
+textarea{min-height:84px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.row{grid-template-columns:1fr}}
+.drop{display:flex;align-items:center;gap:14px;border:2px dashed var(--line);border-radius:16px;padding:14px;cursor:pointer;background:var(--field);color:var(--mute);transition:border-color .2s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+.drop:hover,.drop.over{border-color:var(--cyan);transform:scale(1.01)}
+.drop .ico{font-size:28px}
+.drop img{width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+.drop .x{margin-left:auto}
+button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 18px;font-weight:600}
+.go{width:100%;margin-top:16px;font-family:var(--display);font-size:19px;font-weight:700;color:#fff;background:linear-gradient(90deg,var(--cyan),#7a5cff,var(--pink));background-size:200% 100%;animation:sheen 4s linear infinite;transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.go:hover{transform:scale(1.03,.96)}.go:active{transform:scale(.97,1.05)}.go:disabled{opacity:.6;cursor:wait}
+@keyframes sheen{to{background-position:200% 0}}
+.ghost{background:var(--field);color:var(--ink);padding:8px 13px;font-size:13px;border:1px solid var(--line);transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.ghost:hover{transform:scale(1.06,.94)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:color-mix(in srgb,var(--cyan) 20%,transparent);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;border:1px solid color-mix(in srgb,var(--cyan) 40%,transparent)}
+.cat{cursor:pointer;font-family:var(--display);font-weight:600;transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.cat:hover{transform:scale(1.1,.92) rotate(-2deg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.link{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:14px;padding:11px 13px;font-weight:600;font-size:14px;transition:transform .25s cubic-bezier(.3,1.8,.5,1),border-color .2s}
+.link:hover{border-color:var(--cyan);transform:translateY(-3px) scale(1.02,.98)}
+.link small{display:block;font-weight:400;color:var(--mute);font-size:12px}
+ul{margin:4px 0;padding-left:20px}
+.good li::marker{color:var(--green)}.bad li::marker{color:var(--pink)}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.tiers{grid-template-columns:1fr}}
+.tier{border-radius:16px;padding:14px;color:var(--onc)}
+.tier:nth-child(1){background:#3dff6e}.tier:nth-child(2){background:var(--yellow)}.tier:nth-child(3){background:#ff6fcb}
+.tier b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;opacity:.7}
+.tier span{font-family:var(--display);font-size:24px;font-weight:700}
+.alts{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.alt{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--field);transition:transform .3s cubic-bezier(.3,1.8,.5,1)}
+.alt:hover{transform:translateY(-4px) rotate(-.6deg)}
+.tag{font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:999px;display:inline-block;margin-bottom:6px;color:var(--onc);background:var(--cyan)}
+.tag.budget{background:#3dff6e}.tag.value{background:var(--yellow)}.tag.premium{background:#ff6fcb}
+.alt .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.alt a,.alt button{font-size:12.5px;font-weight:600;color:var(--cyan);text-decoration:none;background:none;border:0;padding:0;cursor:pointer}
+.note{font-size:13px;color:var(--mute)}
+.warn{background:color-mix(in srgb,var(--yellow) 22%,transparent);border:1px solid var(--yellow);border-radius:14px;padding:11px 14px;font-size:14px;margin-top:12px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th{font-size:12px;text-align:left;color:var(--mute);padding:5px 6px}
+td{padding:5px 6px;vertical-align:middle}
+td input{padding:9px 11px}
+.score{font-family:var(--display);font-weight:700;font-size:18px;white-space:nowrap}
+tr.best td{background:color-mix(in srgb,var(--green) 18%,transparent)}
+.cmp td.a,.cmp td.b{font-size:14px;border-bottom:1px solid var(--line)}
+.cmp th{padding:8px 6px}
+.win{background:color-mix(in srgb,var(--green) 22%,transparent);font-weight:700}
+.vs{display:flex;align-items:center;justify-content:center;gap:14px;font-family:var(--display);font-weight:700;margin:6px 0 14px;flex-wrap:wrap;text-align:center}
+.vs .nm{font-size:clamp(18px,4vw,28px);padding:8px 16px;border-radius:14px;color:var(--onc)}
+.vs .nm:first-child{background:var(--cyan)}.vs .nm:last-child{background:#ff6fcb}
+.vs .v{font-size:clamp(32px,8vw,56px);color:var(--yellow);animation:vsP 1.4s ease-in-out infinite alternate}
+@keyframes vsP{to{transform:scale(1.25,.8) rotate(-6deg)}}
+.banner{border-radius:16px;padding:14px 16px;color:var(--onc);background:var(--yellow);font-weight:600}
+.banner b{font-family:var(--display);font-size:20px}
+.gwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.gauge{width:170px;height:170px;flex:none}
+.gauge .fg{transition:stroke-dashoffset 1.6s cubic-bezier(.2,1,.3,1)}
+.gauge text{font-family:var(--display);font-weight:700;fill:var(--ink)}
+.empty{text-align:center;padding:30px 10px;color:var(--mute)}
+.empty .big{font-size:54px;animation:floaty 3s ease-in-out infinite alternate;display:inline-block}
+.wish{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--field);margin-top:10px}
+.wish .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.wish a{color:var(--cyan);font-size:13px;font-weight:600;text-decoration:none}
+.hidden{display:none!important}
+.panel{animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both}
+
+/* ---------- loading overlay ---------- */
+.ov{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(14,12,36,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:24px;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.ov.on{opacity:1;pointer-events:auto}
+.ov .big{font-family:var(--display);font-weight:700;font-size:clamp(40px,12vw,110px);color:#00b2ff;text-transform:uppercase;white-space:nowrap;display:flex}
+.ov .big .l{animation:ld 1.1s ease-in-out infinite;animation-delay:calc(var(--i)*90ms);transform-origin:50% 100%}
+@keyframes ld{0%,100%{transform:scale(1,1)}50%{transform:scale(.8,1.6)}}
+.ov .msg{color:#f4f2ff;font-family:var(--display);font-size:20px;min-height:1.4em}
+.bar{width:min(320px,70vw);height:8px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.bar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,#ffd800,#ff1fa9);animation:bar 1.2s ease-in-out infinite alternate}
+@keyframes bar{to{transform:translateX(150%)}}
+
+.eng{font-size:13px;border-radius:999px;padding:5px 12px;border:1px solid var(--line);background:var(--field)}
+.eng.ok{border-color:var(--green)}.eng.bad{border-color:var(--pink);opacity:.85}
+.meter{height:10px;border-radius:99px;background:var(--field);overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--yellow),var(--green));border-radius:99px;transition:width 1.3s cubic-bezier(.2,1,.3,1)}
+.krow{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;background:var(--field)}
+.krow .top{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:18px}
+.krow .st{margin-left:auto;font-size:13px;font-family:system-ui,sans-serif;font-weight:600}
+.chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;margin-top:14px;cursor:pointer}
+.chk input{width:auto;margin-top:4px}
+.hrow{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--field);margin-top:10px}
+details summary{cursor:pointer;color:var(--cyan);font-weight:600;font-size:14px}
+footer{margin-top:30px;text-align:center}
+.creator{font-family:var(--display);font-size:16px;color:var(--ink);margin-bottom:8px}
+.creator a{color:inherit;text-decoration:underline;text-underline-offset:4px}
+.creator b{background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}.marq .tr{animation:none}}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<div class="grain"></div>
+
+<div class="ov" id="ov" aria-live="polite"><div class="big" id="ovBig"></div><div class="msg" id="ovMsg"></div><div class="bar"><i></i></div></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">⚡ Product<b>Scout</b></div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="scout">🔎 Scout</button>
+      <button class="tab" data-tab="compare">⚔️ Compare</button>
+      <button class="tab" data-tab="scam">🛡️ Scam check</button>
+      <button class="tab" data-tab="saved">♡ Saved<span class="n" id="savedN">0</span></button>
+      <button class="tab" data-tab="history">🕘 History<span class="n" id="histN">0</span></button>
+      <button class="tab" data-tab="settings">⚙️ AI</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="pattern" id="pattern"></div>
+    <h1 class="kin"><span class="word" id="kinWord"></span><span class="stat" id="kinStat"></span></h1>
+    <p class="sub">Describe it, name it, or snap a photo. Get the best quality for the best price, spot scams, compare rivals, and jump straight to every store.</p>
+    <div class="stats">
+      <div class="sb"><b data-n="20">0</b>store shortcuts</div>
+      <div class="sb"><b data-n="4">0</b>AI engines</div>
+      <div class="sb"><b data-n="100">0</b>% free</div>
+      <div class="sb"><b data-n="0">0</b>ads</div>
+    </div>
+  </header>
+
+  <div id="gate" class="card hidden"><h2>🔒 Enter the access code</h2><p class="note">The owner of this site protects it with a code.</p><div class="row"><input id="codeIn" type="password" placeholder="Access code" autocomplete="off"><button class="ghost" id="codeBtn">Unlock</button></div></div>
+
+  <div class="marq" aria-hidden="true"><div class="tr" id="mq"></div></div>
+
+  <!-- ================= SCOUT ================= -->
+  <section class="panel" id="panel-scout">
+    <div class="card">
+      <h2>What are you looking for?</h2>
+      <div class="chips" id="cats" style="margin-bottom:6px"></div>
+      <label for="desc">Product name or description</label>
+      <textarea id="desc" placeholder="e.g. wireless noise cancelling headphones, long battery life, good for study"></textarea>
+
+      <label>Product photo (optional)</label>
+      <div class="drop" id="drop" tabindex="0"></div>
+      <input id="file" type="file" accept="image/*" class="hidden">
+
+      <div class="row">
+        <div><label for="budget">Budget (with currency)</label><input id="budget" placeholder="e.g. under 5000 BDT, or $50 max"></div>
+        <div><label for="prio">What matters most?</label>
+          <select id="prio">
+            <option value="best value for money (good quality at a low price)">Best value (cheap but good)</option>
+            <option value="the lowest price that is still safe and decent quality">Lowest price</option>
+            <option value="the best quality, price is secondary">Best quality</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div><label for="must">Must-have features (optional)</label><input id="must" placeholder="e.g. waterproof, USB-C, 1 year warranty"></div>
+        <div><label for="cond">Condition</label>
+          <select id="cond"><option value="new only">New only</option><option value="new or used / second-hand is fine">New or used</option></select></div>
+      </div>
+      <button class="go" id="go">Find the best options</button>
+      <div id="msg"></div>
+      <div id="hist" style="margin-top:12px"></div>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="card" id="storesCard">
+      <h2>🌐 Search the whole internet in one tap</h2>
+      <p class="note" style="margin:0 0 8px">These open live results, so prices are always current. Edit the words if you like.</p>
+      <input id="q" placeholder="Search words (filled in automatically)">
+      <div id="stores"></div>
+    </div>
+
+    <div class="card">
+      <h2>⚖️ Value scorer</h2>
+      <p class="note" style="margin:0 0 10px">Found a few listings? Enter price, rating and reviews. The best value gets ranked first.</p>
+      <div class="scroll"><table><thead><tr><th>Store / seller</th><th>Price</th><th>Rating (0-5)</th><th>Reviews</th><th>Value</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="addRow">+ Add listing</button><button class="ghost" id="clearRows">Clear</button></div>
+      <div id="verdict" class="note" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ================= COMPARE ================= -->
+  <section class="panel hidden" id="panel-compare">
+    <div class="card">
+      <h2>⚔️ Head-to-head</h2>
+      <p class="note" style="margin:0 0 4px">Two products enter. One winner leaves.</p>
+      <div class="row">
+        <div><label for="cA">Product A</label><input id="cA" placeholder="e.g. Sony WH-1000XM5"></div>
+        <div><label for="cB">Product B</label><input id="cB" placeholder="e.g. Anker Soundcore Q45"></div>
+      </div>
+      <label for="cUse">How will you use it? (optional)</label>
+      <input id="cUse" placeholder="e.g. daily commute, budget under $150">
+      <button class="go" id="cGo">Compare them</button>
+      <div id="cMsg"></div>
+    </div>
+    <div id="cOut"></div>
+  </section>
+
+  <!-- ================= SCAM ================= -->
+  <section class="panel hidden" id="panel-scam">
+    <div class="card">
+      <h2>🛡️ Scam &amp; fake-deal checker</h2>
+      <p class="note" style="margin:0 0 4px">Paste a listing, seller message or deal. Add a screenshot if you have one.</p>
+      <label for="sTxt">Listing text / seller message</label>
+      <textarea id="sTxt" placeholder="e.g. Brand new iPhone 16 Pro only 15,000 BDT, send advance on bKash and I will ship today..."></textarea>
+      <div class="row">
+        <div><label for="sSeller">Seller or website name (optional)</label><input id="sSeller" placeholder="e.g. cheapgadgets-bd.shop"></div>
+        <div><label for="sPrice">Price asked &amp; normal price (optional)</label><input id="sPrice" placeholder="e.g. asked 15,000, normally 120,000"></div>
+      </div>
+      <label>Screenshot (optional)</label>
+      <div class="drop" id="dropS" tabindex="0"></div>
+      <input id="fileS" type="file" accept="image/*" class="hidden">
+      <button class="go" id="sGo">Check for scams</button>
+      <div id="sMsg"></div>
+    </div>
+    <div id="sOut"></div>
+  </section>
+
+  <!-- ================= SAVED ================= -->
+  <section class="panel hidden" id="panel-saved">
+    <div class="card">
+      <h2>♡ Saved products</h2>
+      <div id="wishList"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="copyWish">Copy my list</button><button class="ghost" id="clearWish">Clear all</button></div>
+    </div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section class="panel hidden" id="panel-history">
+    <div class="card">
+      <h2>🕘 History</h2>
+      <label class="chk"><input type="checkbox" id="autosave"> <span>Auto-save every search and its answer (stored only in this browser). Turn off to save results manually with the 💾 button.</span></label>
+      <div id="histList"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="exportHist">Download history</button><button class="ghost" id="clearHist">Clear history</button></div>
+    </div>
+  </section>
+
+  <!-- ================= AI KEYS ================= -->
+  <section class="panel hidden" id="panel-settings">
+    <div class="card">
+      <h2>⚙️ Connect your AIs (paste API)</h2>
+      <div id="netBanner"></div>
+      <p class="note">Paste your own keys. ProductScout asks every AI you connect at the same time, then a judge merges their answers into the one they agree on most. Keys stay in this browser and are sent only to each AI company.</p>
+      <div id="keyForms"></div>
+      <label class="chk"><input type="checkbox" id="remember"> <span>Remember my keys on this device. Leave it off to forget them when you close the page. Do not tick this on a shared computer.</span></label>
+      <div style="margin-top:12px"><button class="ghost" id="forgetKeys">Forget all keys now</button></div>
+    </div>
+  </section>
+
+  <footer class="note"><div class="creator">Creator: <b id="creatorName"><a href="https://www.instagram.com/tasssu._.bby/" target="_blank" rel="noopener noreferrer">Abid Mahmud</a></b></div>AI answers come from the models you connect (Claude, OpenAI, Gemini, DeepSeek), from their knowledge and not a live price feed, so always confirm price, seller rating and return policy on the store page.</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const enc = encodeURIComponent;
+function h(tag, props, ...kids){
+  const e = document.createElement(tag);
+  for (const k in (props||{})){
+    const v = props[k];
+    if (k === 'class') e.className = v;
+    else if (k === 'href'){ e.href = v; e.target = '_blank'; e.rel = 'noopener noreferrer'; }
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)){ if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function letters(text, el){
+  el.replaceChildren();
+  [...text].forEach((ch, i) => { const s = h('span', {class:'l'}, ch === ' ' ? '\u00a0' : ch); s.style.setProperty('--i', i); el.append(s); });
+}
+
+/* ================= kinetic hero ================= */
+const KW = [['FIND', 'var(--cyan)'], ['COMPARE', 'var(--yellow)'], ['SCOUT', 'var(--pink)'], ['SAVE', 'var(--green)']];
+let kwi = 0;
+function showWord(){
+  const w = $('#kinWord'); w.classList.remove('out');
+  w.style.color = KW[kwi][1]; letters(KW[kwi][0], w);
+}
+function cycleWord(){
+  const w = $('#kinWord'); w.classList.add('out');
+  setTimeout(() => { kwi = (kwi + 1) % KW.length; showWord(); }, 650);
+}
+showWord(); letters('the perfect product', $('#kinStat'));
+setInterval(cycleWord, 3200);
+
+// rotating glyph pattern
+(function(){
+  const g = ['$', '★', '%', '✓', '?', '♥', '2', '3', '0'], cols = ['var(--cyan)', 'var(--pink)', 'var(--yellow)', 'var(--green)'], p = $('#pattern');
+  for (let i = 0; i < 34; i++){
+    const s = h('span', {}, g[i % g.length]);
+    s.style.left = (Math.random() * 96) + '%'; s.style.top = (Math.random() * 92) + '%';
+    s.style.fontSize = (22 + Math.random() * 54) + 'px'; s.style.color = cols[i % cols.length];
+    s.style.setProperty('--t', (12 + Math.random() * 22) + 's');
+    if (i % 2) s.style.animationDirection = 'reverse';
+    p.append(s);
+  }
+})();
+
+// count-up stats
+(function(){
+  const els = $$('.sb b');
+  els.forEach(el => {
+    const to = +el.dataset.n, t0 = performance.now(), dur = 1400;
+    (function tick(t){ const k = Math.min(1, (t - t0) / dur); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(tick); })(t0);
+  });
+})();
+
+/* ================= stores ================= */
+const GROUPS = [
+  ['🛒 Shop & compare prices', [
+    ['Google Shopping','compares many shops', q => 'https://www.google.com/search?tbm=shop&q=' + enc(q)],
+    ['Amazon','global marketplace', q => 'https://www.amazon.com/s?k=' + enc(q)],
+    ['AliExpress','cheapest, check seller ratings', q => 'https://www.aliexpress.com/wholesale?SearchText=' + enc(q)],
+    ['Alibaba','bulk / wholesale prices', q => 'https://www.alibaba.com/trade/search?SearchText=' + enc(q)],
+    ['Temu','budget deals', q => 'https://www.temu.com/search_result.html?search_key=' + enc(q)],
+    ['eBay','new and used', q => 'https://www.ebay.com/sch/i.html?_nkw=' + enc(q)],
+    ['Daraz','South Asia marketplace', q => 'https://www.daraz.com.bd/catalog/?q=' + enc(q)],
+    ['Flipkart','India marketplace', q => 'https://www.flipkart.com/search?q=' + enc(q)],
+    ['Walmart','US retailer', q => 'https://www.walmart.com/search?q=' + enc(q)],
+    ['Best Buy','electronics', q => 'https://www.bestbuy.com/site/searchpage.jsp?st=' + enc(q)],
+    ['Etsy','handmade & unique', q => 'https://www.etsy.com/search?q=' + enc(q)],
+    ['Facebook Marketplace','second-hand deals', q => 'https://www.facebook.com/marketplace/search/?query=' + enc(q)]
+  ]],
+  ['📉 Price history', [
+    ['CamelCamelCamel','Amazon price history', q => 'https://camelcamelcamel.com/search?sq=' + enc(q)],
+    ['Price drops & coupons','search for active offers', q => 'https://www.google.com/search?q=' + enc(q + ' price drop coupon deal')]
+  ]],
+  ['⭐ Reviews & quality checks', [
+    ['Reddit reviews','real owner opinions', q => 'https://www.google.com/search?q=' + enc(q + ' review site:reddit.com')],
+    ['YouTube reviews','hands-on videos', q => 'https://www.youtube.com/results?search_query=' + enc(q + ' review')],
+    ['Best / vs / worth it','comparison articles', q => 'https://www.google.com/search?q=' + enc('best ' + q + ' vs alternatives worth it')],
+    ['Problems & complaints','spot common faults', q => 'https://www.google.com/search?q=' + enc(q + ' problems complaints issues')],
+    ['Trustpilot','check seller trust', q => 'https://www.trustpilot.com/search?query=' + enc(q)]
+  ]],
+  ['🖼️ Pictures & look-alikes', [
+    ['Google Images','see the product', q => 'https://www.google.com/search?tbm=isch&q=' + enc(q)],
+    ['Google Lens','upload your photo to find matches', () => 'https://lens.google.com/'],
+    ['Bing Visual Search','another photo matcher', () => 'https://www.bing.com/visualsearch'],
+    ['Pinterest','style inspiration', q => 'https://www.pinterest.com/search/pins/?q=' + enc(q)]
+  ]]
+];
+// marquee
+(function(){
+  const names = []; GROUPS.forEach(g => g[1].forEach(i => names.push(i[0])));
+  const run = names.map(n => h('span', {}, n));
+  $('#mq').append(...run, ...names.map(n => h('span', {}, n)));
+})();
+function renderStores(){
+  const q = $('#q').value.trim(), box = $('#stores'); box.replaceChildren();
+  if (!q){ box.append(h('p', {class:'note'}, 'Type a product above (or in this box) and the search buttons will appear.')); return; }
+  for (const [title, items] of GROUPS){
+    box.append(h('h3', {}, title));
+    box.append(h('div', {class:'grid'}, items.map(([n, d, f]) => h('a', {class:'link', href: f(q)}, h('span', {}, n, h('small', {}, d))))));
+  }
+}
+$('#q').addEventListener('input', () => { $('#q').dataset.touched = '1'; renderStores(); });
+$('#desc').addEventListener('input', () => { if (!$('#q').dataset.touched){ $('#q').value = $('#desc').value.trim().slice(0, 120); renderStores(); } });
+renderStores();
+
+/* ================= image slots ================= */
+function imageSlot(dropEl, inputEl, label){
+  const st = {blob: null};
+  const idle = () => dropEl.replaceChildren(h('span', {class:'ico'}, '📷'), h('span', {}, label));
+  idle();
+  function load(file){
+    if (!file || !file.type.startsWith('image/')) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const sc = Math.min(1, 1024 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const data = c.toDataURL('image/jpeg', 0.85);
+        c.toBlob(b => { st.blob = b; }, 'image/jpeg', 0.85);
+        dropEl.replaceChildren(h('img', {src: data, alt: 'Your photo'}), h('span', {}, 'Photo added'),
+          h('button', {class:'ghost x', onclick: e => { e.stopPropagation(); st.blob = null; idle(); }}, 'Remove'));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+  dropEl.addEventListener('click', () => inputEl.click());
+  dropEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') inputEl.click(); });
+  inputEl.addEventListener('change', () => load(inputEl.files[0]));
+  ['dragenter','dragover'].forEach(ev => dropEl.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => dropEl.addEventListener(ev, e => { e.preventDefault(); dropEl.classList.remove('over'); }));
+  dropEl.addEventListener('drop', e => load(e.dataTransfer.files[0]));
+  return {get blob(){ return st.blob; }, load};
+}
+const slotScout = imageSlot($('#drop'), $('#file'), 'Tap to upload, drag & drop, or paste a screenshot');
+const slotScam = imageSlot($('#dropS'), $('#fileS'), 'Upload a screenshot of the listing or chat');
+let curTab = 'scout';
+document.addEventListener('paste', e => {
+  for (const it of (e.clipboardData && e.clipboardData.items) || []){
+    if (it.type.startsWith('image/')){ (curTab === 'scam' ? slotScam : slotScout).load(it.getAsFile()); break; }
+  }
+});
+
+/* ================= AI engines (Claude + your own keys) ================= */
+const ENG = {
+  claude:   {name: 'Claude',   icon: '🟠'},
+  openai:   {name: 'OpenAI',   icon: '🟢'},
+  gemini:   {name: 'Gemini',   icon: '🔵'},
+  deepseek: {name: 'DeepSeek', icon: '🟣'}
+};
+const DEF_MODEL = {claude: 'claude-sonnet-5-5', openai: 'gpt-4o-mini', gemini: 'gemini-2.5-flash', deepseek: 'deepseek-chat'};
+let settings = Object.assign({remember: false, saveHist: true, models: {}}, store.get('ps_cfg', {}));
+const mem = {keys: Object.assign({claude: '', openai: '', gemini: '', deepseek: ''}, store.get('ps_keys', {}))};
+function saveSettings(){ store.set('ps_cfg', settings); store.set('ps_keys', settings.remember ? mem.keys : {}); }
+const getModel = id => (settings.models && settings.models[id]) || DEF_MODEL[id];
+
+// Can this page talk to other websites? (claude.ai's sandbox says no; a normal browser says yes)
+let netOK = null;
+// Hosted mode: when the site runs on Netlify with the owner's keys stored there, visitors need no keys.
+let hosted = {ok: false, engines: [], needsCode: false};
+const hostedReady = (async () => {
+  try{
+    const r = await fetch('/.netlify/functions/ask?status=1', {cache: 'no-store'});
+    const j = await r.json();
+    if (r.ok && j && Array.isArray(j.engines)) hosted = {ok: true, engines: j.engines, needsCode: !!j.needsCode};
+  }catch(e){}
+  applyHosted();
+})();
+async function probeNet(){
+  try{ await fetch('https://generativelanguage.googleapis.com/', {mode: 'no-cors', cache: 'no-store'}); netOK = true; }
+  catch(e){ netOK = false; }
+  paintNet(); return netOK;
+}
+
+let samplePromise = null;
+function getSample(){
+  if (!samplePromise) samplePromise = ((window.claude && claude.use) ? claude.use('sample') : Promise.resolve(null)).catch(() => null);
+  return samplePromise;
+}
+function parseJSON(t){
+  t = String(t || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  try{ return JSON.parse(t); }
+  catch(e){ const m = t.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw new Error('The AI did not return valid JSON'); }
+}
+function blobB64(b){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(b); });
+}
+async function postJSON(url, headers, body){
+  const r = await fetch(url, {method: 'POST', headers: Object.assign({'Content-Type': 'application/json'}, headers), body: JSON.stringify(body)});
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  if (!r.ok){ const em = j && j.error; throw new Error(String((em && (em.message || em)) || ('HTTP ' + r.status))); }
+  return j;
+}
+async function callCompat(url, key, model, prompt, img64){
+  const content = img64 ? [{type: 'text', text: prompt}, {type: 'image_url', image_url: {url: 'data:image/jpeg;base64,' + img64}}] : prompt;
+  const j = await postJSON(url, {'Authorization': 'Bearer ' + key}, {model, messages: [{role: 'user', content}], response_format: {type: 'json_object'}});
+  return parseJSON(j.choices[0].message.content);
+}
+async function callGemini(key, model, prompt, img64){
+  const parts = [{text: prompt}];
+  if (img64) parts.push({inline_data: {mime_type: 'image/jpeg', data: img64}});
+  const j = await postJSON('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent',
+    {'x-goog-api-key': key}, {contents: [{parts}], generationConfig: {responseMimeType: 'application/json'}});
+  return parseJSON(j.candidates[0].content.parts.map(p => p.text || '').join(''));
+}
+async function runHosted(id, prompt, o){
+  const img64 = id === 'deepseek' ? null : (o.img64 || null);
+  try{
+    const j = await postJSON('/.netlify/functions/ask', {}, {engine: id, prompt, img64, code: store.get('ps_code', '')});
+    return {d: parseJSON(j.text), img: !!img64};
+  }catch(e){
+    if (/access code/i.test(String(e.message))){ store.set('ps_code', ''); const g = $('#gate'); if (g) g.classList.remove('hidden'); }
+    throw e;
+  }
+}
+async function callClaude(key, model, prompt, img64){
+  const content = [];
+  if (img64) content.push({type: 'image', source: {type: 'base64', media_type: 'image/jpeg', data: img64}});
+  content.push({type: 'text', text: prompt});
+  const j = await postJSON('https://api.anthropic.com/v1/messages',
+    {'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'},
+    {model, max_tokens: 4096, messages: [{role: 'user', content}]});
+  return parseJSON((j.content || []).map(p => p.text || '').join(''));
+}
+async function runModel(id, prompt, o){
+  o = o || {};
+  if (hosted.ok) return runHosted(id, prompt, o);
+  if (id === 'claude'){
+    const s = await getSample();
+    if (!s){
+      if (!mem.keys.claude) throw {code: 'unavailable'};
+      return {d: await callClaude(mem.keys.claude, getModel('claude'), prompt, o.img64), img: !!o.img64};
+    }
+    const opts = {cache: false, modelTier: 'default'}; let img = false;
+    if (o.blob){ try{ const l = await s.limits(); if (l && l.images){ opts.images = [o.blob]; img = true; } }catch(e){} }
+    return {d: await s.json(prompt, opts), img};
+  }
+  if (id === 'openai') return {d: await callCompat('https://api.openai.com/v1/chat/completions', mem.keys.openai, getModel('openai'), prompt, o.img64), img: !!o.img64};
+  if (id === 'gemini') return {d: await callGemini(mem.keys.gemini, getModel('gemini'), prompt, o.img64), img: !!o.img64};
+  if (id === 'deepseek') return {d: await callCompat('https://api.deepseek.com/chat/completions', mem.keys.deepseek, getModel('deepseek'), prompt, null), img: false};
+  throw new Error('Unknown engine');
+}
+function friendly(e){
+  if (!e) return 'failed';
+  if (e.code === 'not_granted') return 'permission not granted';
+  if (e.code === 'rate_limited') return 'rate limited';
+  if (e.code === 'unavailable') return 'not available here';
+  const m = String(e.message || e);
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'connection blocked (CORS, offline, or sandbox)';
+  if (/^HTTP 5/.test(m)) return 'the server timed out or failed, please try again';
+  return m.slice(0, 140);
+}
+async function availableIds(){
+  await netReady; await hostedReady;
+  if (hosted.ok) return hosted.engines.slice();
+  const ids = [];
+  if ((await getSample()) || (netOK !== false && mem.keys.claude)) ids.push('claude');
+  if (netOK !== false){ for (const id of ['openai', 'gemini', 'deepseek']) if (mem.keys[id]) ids.push(id); }
+  return ids;
+}
+async function synthesize(prompt, answers){
+  const body = JSON.stringify(answers.map(a => ({model: ENG[a.id].name, answer: a.data})));
+  const sp =
+`You are the judge. Several AI models independently answered the same shopping request.
+
+ORIGINAL REQUEST AND REQUIRED JSON SHAPE:
+<<<
+${prompt}
+>>>
+
+INDEPENDENT ANSWERS (JSON):
+${body}
+
+Task: produce ONE final answer in exactly the same JSON shape the original request requires. Rules:
+- Keep points that two or more models agree on.
+- Keep a point from a single model only if it is clearly correct and useful.
+- Merge duplicates. Where models disagree on prices or facts, give a range covering them and say they differ.
+- Do not invent facts.
+Add one extra top-level field "agreement": {"score": 0-100 (how much the models agreed), "agreed": ["up to 4 things most models agreed on"], "differed": ["up to 3 real disagreements, or an empty list"]}.
+Return ONLY the JSON object.`;
+  const order = ['claude', 'gemini', 'openai', 'deepseek'].filter(id => answers.some(a => a.id === id));
+  for (const id of order){
+    try{ const r = await runModel(id, sp, null); if (r.d && typeof r.d === 'object') return r.d; }catch(e){}
+  }
+  throw new Error('no judge available');
+}
+async function consensus(prompt, blob){
+  await netReady;
+  const img64 = blob ? await blobB64(blob).catch(() => null) : null;
+  const o = {blob, img64};
+  const ids = await availableIds();
+  const status = {};
+  const haveKeys = hosted.ok ? [] : ['claude', 'openai', 'gemini', 'deepseek'].filter(id => mem.keys[id]);
+  if (netOK === false) haveKeys.forEach(id => { status[id] = {ok: false, err: 'blocked in this view'}; });
+  if (!ids.length){ const e = new Error('none'); e.code = haveKeys.length ? 'blocked' : 'unavailable'; throw e; }
+  const settled = await Promise.allSettled(ids.map(id => runModel(id, prompt, o)));
+  const answers = []; let imageUsed = false;
+  settled.forEach((s, i) => {
+    const id = ids[i];
+    if (s.status === 'fulfilled' && s.value && s.value.d && typeof s.value.d === 'object'){ status[id] = {ok: true}; answers.push({id, data: s.value.d}); imageUsed = imageUsed || s.value.img; }
+    else status[id] = {ok: false, err: friendly(s.reason)};
+  });
+  if (!answers.length){ const e = new Error('all failed'); e.code = 'all_failed'; e.status = status; throw e; }
+  let data = answers[0].data, agreement = null, merged = false;
+  if (answers.length > 1){
+    try{
+      data = await synthesize(prompt, answers); merged = true;
+      const a = data.agreement;
+      if (a && typeof a === 'object'){ a.score = Math.max(0, Math.min(100, Math.round(+a.score || 0))); agreement = a; }
+    }catch(e){ data = answers[0].data; merged = false; }
+  }
+  return {data, status, answers, imageUsed, agreement, merged, count: answers.length};
+}
+function errBox(err){
+  const c = err && err.code; let t = 'Something went wrong. Please try again.';
+  if (c === 'not_granted') t = 'Permission for AI analysis was not granted. The store shortcuts still work.';
+  else if (c === 'rate_limited') t = 'Too many requests. Wait a moment and try again.';
+  else if (c === 'unavailable') t = hosted.ok ? 'This site has no AI connected yet. The site owner needs to add an API key in Netlify. The store shortcuts still work.' : 'No AI is connected yet. Open the ⚙️ AI tab and paste at least one API key (Claude, OpenAI, Gemini or DeepSeek). The store shortcuts still work.';
+  else if (c === 'blocked') t = 'Your keys are saved, but this view blocks connections to other AI companies. Open the downloaded copy of the page in your browser to use them.';
+  else if (c === 'all_failed') t = 'Every connected AI failed. ' + Object.keys(err.status || {}).map(k => ENG[k].name + ': ' + err.status[k].err).join('  |  ');
+  return h('div', {class: 'warn'}, t);
+}
+function briefAnswer(d){
+  const b = [];
+  if (d.product && d.product.name) b.push(d.product.name);
+  if (d.winner) b.push('winner ' + d.winner);
+  if (d.risk_score != null) b.push('risk ' + d.risk_score);
+  if (d.price_guide && d.price_guide.fair) b.push('fair price ' + d.price_guide.fair);
+  if (Array.isArray(d.alternatives)) b.push('alternatives: ' + d.alternatives.slice(0, 3).map(a => a.name).join(', '));
+  return b.join(' · ') || '(answered)';
+}
+function metaCard(res){
+  const n = res.count || (res.answers && res.answers.length) || 1;
+  const chips = Object.keys(ENG).filter(id => res.status && res.status[id]).map(id => {
+    const s = res.status[id];
+    return h('span', {class: 'eng ' + (s.ok ? 'ok' : 'bad'), title: s.ok ? 'Answered' : s.err}, ENG[id].icon + ' ' + ENG[id].name + (s.ok ? ' ✓' : ' ✗'));
+  });
+  const kids = [h('h2', {}, n > 1 && res.merged ? '🤝 Merged answer from ' + n + ' AIs' : '🤖 Answer from ' + n + ' AI'), h('div', {class: 'chips'}, chips)];
+  const ag = res.agreement;
+  if (ag && res.merged){
+    const bar = h('i', {});
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = ag.score + '%'; }));
+    kids.push(h('div', {style: 'margin-top:12px;font-weight:600'}, 'How much the AIs agreed: ' + ag.score + '%'), h('div', {class: 'meter'}, bar));
+    if (ag.agreed && ag.agreed.length) kids.push(h('h3', {}, 'They agreed on'), h('ul', {class: 'good'}, ag.agreed.map(x => h('li', {}, x))));
+    if (ag.differed && ag.differed.length) kids.push(h('h3', {}, 'They differed on'), h('ul', {class: 'bad'}, ag.differed.map(x => h('li', {}, x))));
+  }
+  const failed = Object.keys(res.status || {}).filter(id => !res.status[id].ok);
+  if (failed.length) kids.push(h('p', {class: 'note'}, failed.map(id => ENG[id].name + ': ' + res.status[id].err).join('  |  ')));
+  if (res.answers && res.answers.length > 1 && res.answers.some(a => a.data && Object.keys(a.data).length)){
+    kids.push(h('details', {style: 'margin-top:10px'}, h('summary', {}, 'See each AI\'s own answer'),
+      res.answers.map(a => h('p', {class: 'note'}, ENG[a.id].icon + ' ' + ENG[a.id].name + ': ' + briefAnswer(a.data)))));
+  }
+  if (n < 2 && res.ctx && !hosted.ok) kids.push(h('p', {class: 'note'}, 'Only one AI answered. Add more in the ⚙️ AI tab to cross-check answers. ', h('button', {class: 'ghost', onclick: () => goTab('settings')}, 'Open ⚙️ AI')));
+  if (res.ctx && settings.saveHist === false){
+    kids.push(h('div', {style: 'margin-top:10px'}, h('button', {class: 'ghost', onclick: e => { saveHistory(res.ctx.kind, res.ctx.title, res.ctx.input, res, true); e.currentTarget.textContent = 'Saved ✓'; }}, '💾 Save to history')));
+  }
+  return h('div', {class: 'card'}, kids);
+}
+const netReady = probeNet();
+
+const OV_MSGS = ['Reading your request…', 'Hunting for deals…', 'Checking quality signs…', 'Sniffing out red flags…', 'Ranking by value…'];
+let ovTimer = null;
+function loading(on, word){
+  const ov = $('#ov');
+  if (on){
+    letters(word || 'SCOUTING', $('#ovBig'));
+    let i = 0; $('#ovMsg').textContent = OV_MSGS[0];
+    ovTimer = setInterval(() => { i = (i + 1) % OV_MSGS.length; $('#ovMsg').textContent = OV_MSGS[i]; }, 1500);
+    ov.classList.add('on');
+  } else { clearInterval(ovTimer); ov.classList.remove('on'); }
+}
+function list(arr, cls){ return h('ul', {class: cls}, (arr || []).map(x => h('li', {}, x))); }
+function pops(root){ [...root.children].forEach((c, i) => { c.classList.add('pop'); c.style.setProperty('--d', (i * 110) + 'ms'); }); }
+
+/* ================= tabs ================= */
+function goTab(t){
+  curTab = t;
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ['scout', 'compare', 'scam', 'saved', 'history', 'settings'].forEach(n => {
+    const p = $('#panel-' + n); p.classList.toggle('hidden', n !== t);
+    if (n === t){ p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; }
+  });
+  if (t === 'saved') renderWish();
+  if (t === 'history') renderHistory();
+  if (t === 'settings') renderKeys();
+  $('#panel-' + t).scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) goTab(b.dataset.tab); });
+
+/* ================= categories & history ================= */
+[['📱','Smartphone'],['💻','Laptop'],['🎧','Wireless headphones'],['👟','Running shoes'],['🧴','Face serum'],['⌚','Smartwatch'],['📷','Mirrorless camera'],['🍳','Air fryer'],['🖱️','Gaming mouse'],['🎒','Laptop backpack']]
+  .forEach(([i, n]) => $('#cats').append(h('button', {class:'chip cat', onclick: () => { $('#desc').value = n; $('#q').dataset.touched = ''; $('#q').value = n; renderStores(); $('#desc').focus(); }}, i + ' ' + n)));
+function renderHist(){
+  const hist = store.get('ps_hist', []), box = $('#hist'); box.replaceChildren();
+  if (!hist.length) return;
+  box.append(h('div', {class:'note', style:'margin-bottom:6px'}, 'Recent searches'),
+    h('div', {class:'chips'}, hist.map(x => h('button', {class:'chip cat', onclick: () => { $('#desc').value = x; $('#q').dataset.touched = ''; $('#q').value = x; renderStores(); }}, x))));
+}
+function addHist(t){
+  t = t.trim().slice(0, 60); if (!t) return;
+  const hist = [t, ...store.get('ps_hist', []).filter(x => x !== t)].slice(0, 6);
+  store.set('ps_hist', hist); renderHist();
+}
+renderHist();
+
+/* ================= wishlist ================= */
+function wishAll(){ return store.get('ps_wish', []); }
+function saveItem(name, tier, why){
+  const w = wishAll();
+  if (w.some(x => x.name.toLowerCase() === name.toLowerCase())) return false;
+  w.unshift({name, tier: tier || '', why: why || ''}); store.set('ps_wish', w); updateN(); return true;
+}
+function updateN(){ $('#savedN').textContent = wishAll().length; }
+function renderWish(){
+  const w = wishAll(), box = $('#wishList'); box.replaceChildren();
+  if (!w.length){ box.append(h('div', {class:'empty'}, h('span', {class:'big'}, '💜'), h('p', {}, 'Nothing saved yet. Tap ♡ Save on any product you like.'))); return; }
+  w.forEach((x, i) => box.append(h('div', {class:'wish pop', style:'--d:' + (i * 60) + 'ms'},
+    h('div', {}, x.tier && h('span', {class:'tag ' + x.tier}, x.tier), h('div', {style:'font-weight:700'}, x.name), x.why && h('div', {class:'note'}, x.why),
+      h('div', {class:'acts'},
+        h('a', {href:'https://www.google.com/search?tbm=shop&q=' + enc(x.name)}, 'Check prices →'),
+        h('a', {href:'https://www.google.com/search?tbm=isch&q=' + enc(x.name)}, 'Pictures →'),
+        h('a', {href:'https://www.google.com/search?q=' + enc(x.name + ' review site:reddit.com')}, 'Reviews →'))),
+    h('button', {class:'ghost', onclick: () => { const a = wishAll(); a.splice(i, 1); store.set('ps_wish', a); updateN(); renderWish(); }}, 'Remove'))));
+}
+$('#clearWish').addEventListener('click', () => { store.set('ps_wish', []); updateN(); renderWish(); });
+$('#copyWish').addEventListener('click', async e => {
+  const txt = wishAll().map((x, i) => (i + 1) + '. ' + x.name + (x.why ? ' - ' + x.why : '')).join('\n');
+  const b = e.currentTarget;
+  try{ await navigator.clipboard.writeText(txt || 'My list is empty'); b.textContent = 'Copied ✓'; }catch(err){ b.textContent = 'Copy not allowed here'; }
+  setTimeout(() => { b.textContent = 'Copy my list'; }, 1800);
+});
+updateN();
+
+/* ================= SCOUT ================= */
+let lastProduct = '';
+function saveBtn(name, tier, why){
+  const b = h('button', {onclick: () => { const ok = saveItem(name, tier, why); b.textContent = ok ? '♥ Saved' : '♥ Already saved'; }}, '♡ Save');
+  return b;
+}
+function renderScout(d, meta){
+  const r = $('#results'); r.replaceChildren();
+  const p = d.product || {}; lastProduct = p.name || '';
+  if (meta) r.append(metaCard(meta));
+  r.append(h('div', {class:'card'},
+    h('h2', {}, '🧠 ' + (p.name || 'Product')),
+    h('div', {class:'chips'}, p.category && h('span', {class:'chip'}, p.category), p.brand_guess && h('span', {class:'chip'}, 'Brand: ' + p.brand_guess), p.confidence && h('span', {class:'chip'}, 'Match: ' + p.confidence)),
+    p.summary && h('p', {}, p.summary),
+    (d.key_specs && d.key_specs.length) ? [h('h3', {}, 'Key specs to compare'), h('div', {class:'chips'}, d.key_specs.map(s => h('span', {class:'chip'}, s)))] : null,
+    h('div', {style:'margin-top:12px;display:flex;gap:10px;flex-wrap:wrap'}, (() => { const b = saveBtn(p.name || 'Product', '', p.summary || ''); b.className = 'ghost'; return b; })())));
+  const g = d.price_guide;
+  if (g) r.append(h('div', {class:'card'}, h('h2', {}, '💰 Rough price guide'),
+    h('div', {class:'tiers'}, h('div', {class:'tier'}, h('b', {}, 'Budget'), h('span', {}, g.budget || '-')), h('div', {class:'tier'}, h('b', {}, 'Fair price'), h('span', {}, g.fair || '-')), h('div', {class:'tier'}, h('b', {}, 'Premium'), h('span', {}, g.premium || '-'))),
+    h('p', {class:'note'}, g.note || 'Estimates only. Check live prices with the buttons below.')));
+  r.append(h('div', {class:'card'}, h('div', {class:'row'},
+    h('div', {}, h('h2', {}, '✅ Signs of good quality'), list(d.quality_signals, 'good')),
+    h('div', {}, h('h2', {}, '🚩 Red flags & scams'), list(d.red_flags, 'bad')))));
+  if (d.alternatives && d.alternatives.length){
+    r.append(h('div', {class:'card'}, h('h2', {}, '🔁 Similar & alternative options'),
+      h('div', {class:'alts'}, d.alternatives.map(a => {
+        const t = (a.tier || 'value').toLowerCase();
+        return h('div', {class:'alt'}, h('span', {class:'tag ' + t}, t), h('div', {style:'font-weight:700'}, a.name), h('div', {class:'note', style:'margin-top:4px'}, a.why),
+          h('div', {class:'acts'},
+            h('a', {href:'https://www.google.com/search?tbm=shop&q=' + enc(a.name)}, 'Prices →'),
+            h('a', {href:'https://www.google.com/search?tbm=isch&q=' + enc(a.name)}, 'Pictures →'),
+            saveBtn(a.name, t, a.why),
+            h('button', {onclick: () => { $('#cA').value = lastProduct; $('#cB').value = a.name; goTab('compare'); }}, '⚔️ Compare')));
+      })),
+      h('p', {class:'note', style:'margin-top:10px'}, 'Models change fast. Confirm they are still sold and in stock.')));
+  }
+  if (d.tips && d.tips.length) r.append(h('div', {class:'card'}, h('h2', {}, '💡 Smart buying tips'), list(d.tips)));
+  pops(r);
+  const qs = d.queries || {};
+  if (qs.main){ $('#q').value = qs.main; $('#q').dataset.touched = '1'; renderStores(); }
+  r.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+async function analyze(){
+  const text = $('#desc').value.trim(), blob = slotScout.blob;
+  if (!text && !blob){ $('#msg').replaceChildren(h('div', {class:'warn'}, 'Add a product name, a description, or a photo first.')); return; }
+  $('#msg').replaceChildren(); $('#go').disabled = true; loading(true, 'SCOUTING');
+  try{
+    const prompt =
+`You are a smart shopping assistant. The user wants to buy a product.
+Product text: ${text || '(none, identify from the attached photo)'}
+${blob ? 'A photo of the product is attached. Identify the product from it as precisely as you can.' : ''}
+Budget: ${$('#budget').value.trim() || 'not specified'}
+Priority: ${$('#prio').value}
+Must-have features: ${$('#must').value.trim() || 'none given'}
+Condition: ${$('#cond').value}
+
+Return ONLY valid JSON, no markdown fences, with exactly this shape:
+{
+ "product": {"name": "specific product name", "category": "", "brand_guess": "", "confidence": "low|medium|high", "summary": "2 sentence plain description"},
+ "key_specs": ["5-8 specs that matter when comparing this product"],
+ "price_guide": {"budget": "typical low price", "fair": "typical fair price", "premium": "typical high price", "note": "state the currency used and that these are rough estimates"},
+ "quality_signals": ["4-6 concrete signs of a good one"],
+ "red_flags": ["4-6 concrete red flags, fakes, or scam signs for this product type"],
+ "alternatives": [{"name": "specific real model or product type", "tier": "budget|value|premium", "why": "one sentence"}],
+ "tips": ["3-5 buying tips specific to this product"],
+ "queries": {"main": "best short search phrase for online shops"}
+}
+Give 4-6 alternatives that fit the budget, priority and must-haves (include similar look-alikes). Use the budget's currency for prices if given. If unsure of a price, give a range and say so. Do not invent exact current prices.`;
+    const res = await consensus(prompt, blob);
+    loading(false);
+    const d = res.data;
+    res.ctx = {kind: 'scout', title: text || (d.product && d.product.name) || 'Photo search', input: {text}};
+    saveHistory(res.ctx.kind, res.ctx.title, res.ctx.input, res);
+    renderScout(d, res); addHist(text || (d.product && d.product.name) || '');
+    if (blob && !res.imageUsed) $('#msg').replaceChildren(h('div', {class:'warn'}, 'Photo analysis is not available here, so only your text was used.'));
+  }catch(err){
+    loading(false); $('#msg').replaceChildren(errBox(err));
+    if (text && !$('#q').value){ $('#q').value = text.slice(0, 120); renderStores(); }
+  }finally{ $('#go').disabled = false; }
+}
+$('#go').addEventListener('click', analyze);
+
+/* ================= COMPARE ================= */
+function renderCompare(d, a, b, meta){
+  const out = $('#cOut'); out.replaceChildren();
+  if (meta) out.append(metaCard(meta));
+  const w = d.winner;
+  out.append(h('div', {class: 'card'}, h('div', {class: 'vs'}, h('span', {class: 'nm'}, a), h('span', {class: 'v'}, 'VS'), h('span', {class: 'nm'}, b)),
+    h('div', {class: 'banner'}, h('b', {}, w === 'tie' ? '🤝 It is a tie' : '🏆 Winner: ' + (w === 'A' ? a : b)), h('div', {}, d.headline || ''))));
+  out.append(h('div', {class: 'card'}, h('div', {class: 'scroll'}, h('table', {class: 'cmp'},
+    h('thead', {}, h('tr', {}, h('th', {}, ''), h('th', {}, a), h('th', {}, b))),
+    h('tbody', {}, (d.rows || []).map(r => h('tr', {}, h('td', {style: 'font-weight:700;font-size:13px'}, r.attribute),
+      h('td', {class: 'a' + (r.better === 'A' ? ' win' : '')}, r.a), h('td', {class: 'b' + (r.better === 'B' ? ' win' : '')}, r.b))))))));
+  out.append(h('div', {class: 'card'}, h('div', {class: 'row'},
+    h('div', {}, h('h2', {}, 'Choose ' + a + ' if…'), list(d.choose_a_if, 'good')),
+    h('div', {}, h('h2', {}, 'Choose ' + b + ' if…'), list(d.choose_b_if, 'good')))));
+  out.append(h('div', {class: 'card'}, h('h2', {}, '🧾 Verdict'), h('p', {}, d.verdict || ''), d.price_note && h('p', {class: 'note'}, d.price_note),
+    h('div', {class: 'grid', style: 'margin-top:10px'},
+      h('a', {class: 'link', href: 'https://www.google.com/search?tbm=shop&q=' + enc(a)}, h('span', {}, 'Prices: ' + a)),
+      h('a', {class: 'link', href: 'https://www.google.com/search?tbm=shop&q=' + enc(b)}, h('span', {}, 'Prices: ' + b)),
+      h('a', {class: 'link', href: 'https://www.youtube.com/results?search_query=' + enc(a + ' vs ' + b)}, h('span', {}, 'Video comparisons')),
+      h('a', {class: 'link', href: 'https://www.google.com/search?q=' + enc(a + ' vs ' + b + ' reddit')}, h('span', {}, 'Reddit opinions')))));
+  pops(out); out.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+async function compare(){
+  const a = $('#cA').value.trim(), b = $('#cB').value.trim();
+  if (!a || !b){ $('#cMsg').replaceChildren(h('div', {class: 'warn'}, 'Enter both products to compare.')); return; }
+  $('#cMsg').replaceChildren(); $('#cGo').disabled = true; loading(true, 'VERSUS');
+  try{
+    const prompt =
+`Compare two products for a shopper.
+Product A: ${a}
+Product B: ${b}
+Use case / budget: ${$('#cUse').value.trim() || 'general use'}
+
+Return ONLY valid JSON, no markdown fences:
+{
+ "winner": "A" | "B" | "tie",
+ "headline": "one punchy sentence naming the winner and why",
+ "rows": [{"attribute": "", "a": "", "b": "", "better": "A" | "B" | "tie"}],
+ "choose_a_if": ["2-3 short reasons"],
+ "choose_b_if": ["2-3 short reasons"],
+ "verdict": "2-3 sentence final advice",
+ "price_note": "which one usually costs less and the rough gap; say these are estimates"
+}
+Give 6-8 rows covering price, quality, key specs, durability, warranty/support and common complaints. Be honest if you are not sure about a model.`;
+    const res = await consensus(prompt, null);
+    loading(false);
+    res.ctx = {kind: 'compare', title: a + ' vs ' + b, input: {a, b, use: $('#cUse').value.trim()}};
+    saveHistory(res.ctx.kind, res.ctx.title, res.ctx.input, res);
+    renderCompare(res.data, a, b, res);
+  }catch(err){ loading(false); $('#cMsg').replaceChildren(errBox(err)); }
+  finally{ $('#cGo').disabled = false; }
+}
+$('#cGo').addEventListener('click', compare);
+
+/* ================= SCAM CHECK ================= */
+function gauge(score){
+  const NS = 'http://www.w3.org/2000/svg', C = 2 * Math.PI * 52;
+  const mk = (t, at) => { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  const col = score < 35 ? 'var(--green)' : score < 65 ? 'var(--yellow)' : 'var(--pink)';
+  const svg = mk('svg', {viewBox: '0 0 120 120', class: 'gauge'});
+  const g = mk('g', {transform: 'rotate(-90 60 60)'});
+  g.append(mk('circle', {cx: 60, cy: 60, r: 52, fill: 'none', stroke: 'var(--line)', 'stroke-width': 11}));
+  const fg = mk('circle', {cx: 60, cy: 60, r: 52, fill: 'none', stroke: col, 'stroke-width': 11, 'stroke-linecap': 'round', 'stroke-dasharray': C, 'stroke-dashoffset': C, class: 'fg'});
+  g.append(fg); svg.append(g);
+  const t = mk('text', {x: 60, y: 66, 'text-anchor': 'middle', 'font-size': 30}); t.textContent = '0'; svg.append(t);
+  const t2 = mk('text', {x: 60, y: 84, 'text-anchor': 'middle', 'font-size': 9}); t2.textContent = 'RISK'; svg.append(t2);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fg.setAttribute('stroke-dashoffset', C * (1 - score / 100));
+    const t0 = performance.now();
+    (function tick(n){ const k = Math.min(1, (n - t0) / 1500); t.textContent = Math.round(score * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(tick); })(t0);
+  }));
+  return svg;
+}
+function renderScam(d, seller, meta){
+  const out = $('#sOut'); out.replaceChildren();
+  if (meta) out.append(metaCard(meta));
+  const sc = Math.max(0, Math.min(100, Math.round(+d.risk_score || 0)));
+  out.append(h('div', {class: 'card'}, h('div', {class: 'gwrap'}, gauge(sc),
+    h('div', {style: 'flex:1;min-width:220px'}, h('h2', {}, (sc < 35 ? '✅ ' : sc < 65 ? '⚠️ ' : '🚨 ') + (d.verdict || '')), h('p', {}, d.summary || ''),
+      h('p', {class: 'note'}, 'This is an AI judgement from the text only. It cannot confirm who the seller really is.')))));
+  out.append(h('div', {class: 'card'}, h('div', {class: 'row'},
+    h('div', {}, h('h2', {}, '🔍 What stood out'), list(d.reasons, 'bad')),
+    h('div', {}, h('h2', {}, '✅ Verify before paying'), list(d.verify_steps, 'good')))));
+  out.append(h('div', {class: 'card'}, h('h2', {}, '💳 Safer ways to pay'), list(d.safe_payment, 'good'),
+    seller ? h('div', {class: 'grid', style: 'margin-top:10px'},
+      h('a', {class: 'link', href: 'https://www.google.com/search?q=' + enc('"' + seller + '" scam OR reviews OR complaints')}, h('span', {}, 'Search seller reviews', h('small', {}, seller))),
+      h('a', {class: 'link', href: 'https://www.scamadviser.com/check-website/' + enc(seller.replace(/^https?:\/\//, '').split('/')[0])}, h('span', {}, 'ScamAdviser', h('small', {}, 'website trust score'))),
+      h('a', {class: 'link', href: 'https://www.trustpilot.com/search?query=' + enc(seller)}, h('span', {}, 'Trustpilot', h('small', {}, 'customer reviews')))) : null));
+  pops(out); out.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+async function scam(){
+  const txt = $('#sTxt').value.trim(), blob = slotScam.blob;
+  if (!txt && !blob){ $('#sMsg').replaceChildren(h('div', {class: 'warn'}, 'Paste the listing text or upload a screenshot first.')); return; }
+  $('#sMsg').replaceChildren(); $('#sGo').disabled = true; loading(true, 'CHECKING');
+  try{
+    const seller = $('#sSeller').value.trim();
+    const prompt =
+`You are a fraud-awareness assistant helping a shopper judge a deal.
+Listing / message: ${txt || '(see the attached screenshot)'}
+${blob ? 'A screenshot is attached. Read it carefully.' : ''}
+Seller or website: ${seller || 'not given'}
+Price info: ${$('#sPrice').value.trim() || 'not given'}
+
+Return ONLY valid JSON, no markdown fences:
+{
+ "risk_score": 0-100 (integer, higher = more likely a scam or fake),
+ "verdict": "Looks safe" | "Be careful" | "Likely scam",
+ "summary": "2 sentence plain explanation",
+ "reasons": ["3-6 specific warning signs or reassuring signs found in the text"],
+ "verify_steps": ["4-6 concrete things the buyer should check before paying"],
+ "safe_payment": ["2-3 safer ways to pay or receive for this kind of deal"]
+}
+You cannot verify the seller live, so be honest that this is a judgement from the text only. Never claim certainty.`;
+    const res = await consensus(prompt, blob);
+    loading(false);
+    res.ctx = {kind: 'scam', title: seller || txt.slice(0, 50) || 'Screenshot check', input: {txt, seller, price: $('#sPrice').value.trim()}};
+    saveHistory(res.ctx.kind, res.ctx.title, res.ctx.input, res);
+    renderScam(res.data, seller, res);
+    if (blob && !res.imageUsed) $('#sMsg').replaceChildren(h('div', {class: 'warn'}, 'Screenshot reading is not available here, so only your text was checked.'));
+  }catch(err){ loading(false); $('#sMsg').replaceChildren(errBox(err)); }
+  finally{ $('#sGo').disabled = false; }
+}
+$('#sGo').addEventListener('click', scam);
+
+/* ================= HISTORY (auto-save) ================= */
+function histAll(){ return store.get('ps_history', []); }
+function updateHN(){ const n = $('#histN'); if (n) n.textContent = histAll().length; }
+function saveHistory(kind, title, input, res, force){
+  if (!force && settings.saveHist === false) return;
+  const arr = histAll();
+  arr.unshift({id: Date.now() + Math.random(), kind, title: String(title || 'Untitled').slice(0, 90), t: new Date().toISOString(), input,
+    data: res.data, meta: {status: res.status, merged: !!res.merged, agreement: res.agreement || null, count: res.count || 1}});
+  store.set('ps_history', arr.slice(0, 60)); updateHN();
+}
+function openHist(it){
+  const m = it.meta || {};
+  const meta = {status: m.status || {}, merged: !!m.merged, agreement: m.agreement || null, answers: [], count: m.count || 1};
+  const inp = it.input || {};
+  if (it.kind === 'scout'){ $('#desc').value = inp.text || ''; goTab('scout'); renderScout(it.data, meta); }
+  else if (it.kind === 'compare'){ $('#cA').value = inp.a || ''; $('#cB').value = inp.b || ''; $('#cUse').value = inp.use || ''; goTab('compare'); renderCompare(it.data, inp.a || 'A', inp.b || 'B', meta); }
+  else if (it.kind === 'scam'){ $('#sTxt').value = inp.txt || ''; $('#sSeller').value = inp.seller || ''; $('#sPrice').value = inp.price || ''; goTab('scam'); renderScam(it.data, inp.seller || '', meta); }
+}
+function renderHistory(){
+  const arr = histAll(), box = $('#histList'); box.replaceChildren(); updateHN();
+  $('#autosave').checked = settings.saveHist !== false;
+  if (!arr.length){
+    box.append(h('div', {class: 'empty'}, h('span', {class: 'big'}, '🕘'), h('p', {}, settings.saveHist === false ? 'Auto-save is off. Use the 💾 button on a result to keep it.' : 'No history yet. Your searches will appear here automatically.')));
+    return;
+  }
+  const ic = {scout: '🔎', compare: '⚔️', scam: '🛡️'};
+  arr.forEach((it, i) => box.append(h('div', {class: 'hrow pop', style: '--d:' + (Math.min(i, 8) * 50) + 'ms'},
+    h('div', {style: 'min-width:0'},
+      h('div', {style: 'font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'}, (ic[it.kind] || '•') + ' ' + it.title),
+      h('div', {class: 'note'}, new Date(it.t).toLocaleString() + (it.meta && it.meta.count > 1 ? ' · ' + it.meta.count + ' AIs' : ''))),
+    h('div', {style: 'display:flex;gap:8px;flex:none'},
+      h('button', {class: 'ghost', onclick: () => openHist(it)}, 'Open'),
+      h('button', {class: 'ghost', onclick: () => { store.set('ps_history', histAll().filter(x => x.id !== it.id)); renderHistory(); }}, 'Delete')))));
+}
+async function exportHistory(){
+  const txt = JSON.stringify(histAll(), null, 2);
+  try{ const dl = await claude.use('downloads'); if (dl){ await dl.save({filename: 'productscout-history.json', data: txt}); return; } }catch(e){}
+  try{
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type: 'application/json'}));
+    a.download = 'productscout-history.json'; document.body.append(a); a.click(); a.remove();
+  }catch(e){}
+}
+$('#autosave').addEventListener('change', e => { settings.saveHist = e.target.checked; saveSettings(); renderHistory(); });
+$('#clearHist').addEventListener('click', () => { store.set('ps_history', []); renderHistory(); });
+$('#exportHist').addEventListener('click', exportHistory);
+
+function applyHosted(){
+  if (!hosted.ok) return;
+  const t = document.querySelector('[data-tab="settings"]'); if (t) t.classList.add('hidden');
+  const g = $('#gate'); if (g) g.classList.toggle('hidden', !(hosted.needsCode && !store.get('ps_code', '')));
+  paintNet();
+}
+$('#codeBtn').addEventListener('click', () => { const v = $('#codeIn').value.trim(); if (!v) return; store.set('ps_code', v); $('#gate').classList.add('hidden'); });
+
+/* ================= AI KEYS (paste API) ================= */
+async function paintNet(){
+  const b = $('#netBanner'); if (!b) return; b.replaceChildren();
+  if (hosted.ok) b.append(h('p', {class: 'note'}, 'AI is connected through this site. Nothing to set up.'));
+  else if (netOK === null) b.append(h('p', {class: 'note'}, 'Checking whether this page can reach the AI companies…'));
+  else if (netOK) b.append(h('div', {class: 'banner', style: 'background:var(--green)'}, '✅ Direct connections allowed. Every key you paste below is used, together with Claude when available.'));
+  else b.append(h('div', {class: 'warn'}, '⚠️ This view blocks connections to other AI companies (claude.ai does this to protect pages). You can paste keys here, but only Claude will answer. To use OpenAI, Gemini and DeepSeek, open the downloaded copy of this page in your normal browser (Chrome, Edge, Safari) or upload it to any website host.'));
+  const s = await getSample(), el = $('#st-claude');
+  if (el){ el.textContent = s ? '✓ available' : 'not available here'; el.style.color = s ? 'var(--green)' : 'var(--mute)'; }
+}
+function renderKeys(){
+  const box = $('#keyForms'); box.replaceChildren();
+  [['claude', 'Paste your Claude (Anthropic) API key', 'sk-ant-…'], ['openai', 'Paste your OpenAI API key', 'sk-…'], ['gemini', 'Paste your Gemini API key', 'AI… or AQ…'], ['deepseek', 'Paste your DeepSeek API key', 'sk-…']].forEach(([id, lab, ph]) => {
+    const key = h('input', {type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: ph, value: mem.keys[id] || ''});
+    const model = h('input', {placeholder: DEF_MODEL[id], value: (settings.models && settings.models[id]) || ''});
+    const st = h('span', {class: 'st'}, mem.keys[id] ? 'key added' : '');
+    key.addEventListener('input', () => { mem.keys[id] = key.value.trim(); st.style.color = ''; st.textContent = mem.keys[id] ? 'key added' : ''; saveSettings(); });
+    model.addEventListener('input', () => { settings.models = settings.models || {}; settings.models[id] = model.value.trim(); saveSettings(); });
+    const test = h('button', {class: 'ghost', onclick: async () => {
+      if (!mem.keys[id]){ st.style.color = ''; st.textContent = 'paste a key first'; return; }
+      await netReady;
+      if (netOK === false){ st.style.color = 'var(--yellow)'; st.textContent = 'blocked in this view'; return; }
+      st.style.color = ''; st.textContent = 'testing…';
+      try{ const r = await runModel(id, 'Return ONLY this JSON object: {"ok": true}', null); st.style.color = 'var(--green)'; st.textContent = r.d ? '✓ connected' : '✓ replied'; }
+      catch(e){ st.style.color = 'var(--pink)'; st.textContent = '✗ ' + friendly(e); }
+    }}, 'Test connection');
+    box.append(h('div', {class: 'krow'}, h('div', {class: 'top'}, ENG[id].icon + ' ' + ENG[id].name, st), h('label', {}, lab), key,
+      h('div', {class: 'row'}, h('div', {}, h('label', {}, 'Model (change it if you see "model not found")'), model), h('div', {style: 'display:flex;align-items:flex-end'}, test))));
+  });
+  paintNet();
+}
+$('#remember').addEventListener('change', e => { settings.remember = e.target.checked; saveSettings(); });
+$('#forgetKeys').addEventListener('click', () => { mem.keys = {claude: '', openai: '', gemini: '', deepseek: ''}; store.set('ps_keys', {}); renderKeys(); });
+
+/* ================= value scorer ================= */
+const rowsEl = $('#rows');
+function addRow(){
+  const tr = h('tr', {},
+    h('td', {}, h('input', {placeholder:'Store name', 'data-k':'s'})),
+    h('td', {}, h('input', {type:'number', min:'0', step:'any', placeholder:'0', 'data-k':'p'})),
+    h('td', {}, h('input', {type:'number', min:'0', max:'5', step:'0.1', placeholder:'4.5', 'data-k':'r'})),
+    h('td', {}, h('input', {type:'number', min:'0', step:'1', placeholder:'120', 'data-k':'n'})),
+    h('td', {class:'score'}, '-'));
+  tr.addEventListener('input', compute); rowsEl.append(tr);
+}
+function compute(){
+  const trs = [...rowsEl.children];
+  const vals = trs.map(tr => {
+    const g = k => parseFloat(tr.querySelector('[data-k="' + k + '"]').value);
+    const p = g('p'), r = g('r'), n = g('n');
+    if (!(p > 0) || !(r >= 0)) return null;
+    const rev = n >= 0 ? n : 0;
+    return {tr, name: tr.querySelector('[data-k="s"]').value.trim(), p, r, n: rev, raw: (r * r * Math.log10(rev + 10)) / p};
+  }).filter(Boolean);
+  const max = Math.max(0, ...vals.map(v => v.raw));
+  trs.forEach(tr => { tr.className = ''; tr.querySelector('.score').textContent = '-'; });
+  let best = null;
+  for (const v of vals){ v.tr.querySelector('.score').textContent = (max ? Math.round(v.raw / max * 100) : 0) + '/100'; if (!best || v.raw > best.raw) best = v; }
+  const vd = $('#verdict'); vd.replaceChildren();
+  if (best && vals.length > 1){
+    best.tr.className = 'best';
+    vd.append('🏆 Best value: ', h('b', {}, best.name || 'Listing ' + (trs.indexOf(best.tr) + 1)), ' at ' + best.p + ' with ' + best.r + '★ from ' + best.n + ' reviews.');
+    if (best.n < 20) vd.append(h('div', {}, '⚠️ Few reviews. Treat this rating with caution.'));
+    if (best.r < 4) vd.append(h('div', {}, '⚠️ Rating under 4★. Check complaints before buying.'));
+  } else if (vals.length === 1) vd.append('Add at least one more listing to compare.');
+}
+$('#addRow').addEventListener('click', addRow);
+$('#clearRows').addEventListener('click', () => { rowsEl.replaceChildren(); addRow(); addRow(); addRow(); compute(); });
+addRow(); addRow(); addRow();
+$('#remember').checked = !!settings.remember;
+$('#autosave').checked = settings.saveHist !== false;
+renderKeys(); updateHN();
+</script>
+</body>
+</html>
